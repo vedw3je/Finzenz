@@ -1,7 +1,9 @@
 package com.ved.finzenz.finzenz.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -12,6 +14,8 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users")
 public class User {
 
@@ -62,31 +66,6 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    // Constructors
 
-    public User() {
-    }
-
-    public User(Long id, String fullName, String email, String phone, String passwordHash, String profilePictureUrl,
-                String address, LocalDate dateOfBirth, String gender, Boolean kycVerified, Boolean isActive,
-                Boolean isDeleted, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime lastLoginAt) {
-        this.id = id;
-        this.fullName = fullName;
-        this.email = email;
-        this.phone = phone;
-        this.passwordHash = passwordHash;
-        this.profilePictureUrl = profilePictureUrl;
-        this.address = address;
-        this.dateOfBirth = dateOfBirth;
-        this.gender = gender;
-        this.kycVerified = kycVerified;
-        this.isActive = isActive;
-        this.isDeleted = isDeleted;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.lastLoginAt = lastLoginAt;
-    }
-
-    // Getters and Setters
 
 }
