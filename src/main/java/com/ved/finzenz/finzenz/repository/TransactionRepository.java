@@ -15,7 +15,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
     // Native query: find all transactions by userId
     @Query(
-            value = "SELECT * FROM transactions t " +
+            value = "SELECT t.* FROM transactions t " +
                     "JOIN accounts a ON t.account_id = a.id " +
                     "WHERE a.user_id = :userId",
             nativeQuery = true
@@ -31,6 +31,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             LocalDateTime startDate,
             LocalDateTime endDate
     );
+
+
 
     // Find all transactions for an account and type
     List<Transaction> findByAccountIdAndTransactionType(

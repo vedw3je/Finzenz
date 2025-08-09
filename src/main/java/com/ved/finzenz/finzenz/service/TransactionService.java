@@ -22,20 +22,20 @@ public interface TransactionService {
     // Get all transactions for all accounts of a user (native query)
     List<Transaction> getTransactionsByUserId(Integer userId);
 
-    List<Transaction> getTransactionsByDateRange(Integer accountId, LocalDateTime startDate, LocalDateTime endDate);
+
 
     // Get all transactions for a user in a date range
     List<Transaction> getTransactionsByUserIdAndDateRange(Integer userId, LocalDateTime startDate, LocalDateTime endDate);
 
-    BigDecimal getTotalSpendingByCategory(Integer accountId, String category);
+
     BigDecimal getTotalSpendingByCategoryForUser(Integer userId, String category);
 
-    BigDecimal getTotalIncome(Integer accountId);
+
     BigDecimal getTotalIncomeForUser(Integer userId);
 
-    BigDecimal getTotalExpense(Integer accountId);
+
     BigDecimal getTotalExpenseForUser(Integer userId);
 
-    List<Transaction> searchTransactionsByDescription(Integer accountId, String keyword);
+
     List<Transaction> searchTransactionsByDescriptionForUser(Integer userId, String keyword);
 }
