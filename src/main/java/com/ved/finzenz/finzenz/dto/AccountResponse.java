@@ -1,5 +1,6 @@
 package com.ved.finzenz.finzenz.dto;
 
+import com.ved.finzenz.finzenz.entities.Account;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,11 +13,11 @@ import java.math.BigDecimal;
 public class AccountResponse {
     private Long id;
     private String accountName;
-    private String accountType;
+    private Account.AccountType accountType;
     private String institutionName;
     private String accountNumber;
     private BigDecimal balance;
-    private String currency;
+    private Account.CurrencyType currency;
     private Boolean isActive;
     private Long userId;
     private String userEmail;
@@ -24,8 +25,8 @@ public class AccountResponse {
     public AccountResponse() {
     }
 
-    public AccountResponse(Long id, String accountName, String accountType, String institutionName,
-                           String accountNumber, BigDecimal balance, String currency, Boolean isActive,
+    public AccountResponse(Long id, String accountName, Account.AccountType accountType, String institutionName,
+                           String accountNumber, BigDecimal balance, Account.CurrencyType currency, Boolean isActive,
                            Long userId, String userEmail) {
         this.id = id;
         this.accountName = accountName;
