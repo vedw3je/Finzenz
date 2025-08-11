@@ -32,7 +32,9 @@ public class Transaction implements Serializable {
     public enum TransactionType {
         CREDIT,
         DEBIT,
-        TRANSFER
+        TRANSFER,
+        INCOME,
+        EXPENSE,
     }
 
     @Id

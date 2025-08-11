@@ -22,7 +22,7 @@ public class Account {
         CURRENT,
         RECURRING,
         FIXED_DEPOSIT,
-        NRI;
+        NRI
     }
 
     public enum CurrencyType {
@@ -31,12 +31,13 @@ public class Account {
         EUR,
         AED,
         JPY,
-        CAD;
+        CAD
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Primary key for the account.
+    @Column(name = "id")
+    private Long accountId;
 
     private String accountName; // User-defined name for this account (e.g., "My Savings", "HDFC Bank").
 
@@ -53,7 +54,7 @@ public class Account {
     @Enumerated(EnumType.STRING)
     private CurrencyType currency; // Currency type (e.g., INR, USD).
 
-    private Boolean isActive; // Used to soft-disable an account (instead of deleting).
+    private Boolean isActive;
 
     private LocalDateTime createdAt; // Timestamp when account was created.
 
