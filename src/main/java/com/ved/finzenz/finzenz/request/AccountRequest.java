@@ -1,5 +1,6 @@
 package com.ved.finzenz.finzenz.request;
 
+import com.ved.finzenz.finzenz.entities.Account;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,11 +12,11 @@ import java.math.BigDecimal;
 @Setter
 public class AccountRequest {
     private String accountName;
-    private String accountType;
+    private Account.AccountType accountType;
     private String institutionName;
     private String accountNumber;
     private BigDecimal balance;
-    private String currency;
+    private Account.CurrencyType currency;
     private Boolean isActive;
     private Long userId;
 }
