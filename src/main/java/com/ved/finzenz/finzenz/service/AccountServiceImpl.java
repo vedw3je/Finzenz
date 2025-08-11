@@ -68,7 +68,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public int getAccountBalance(Long accountId) {
+    public BigDecimal getAccountBalance(Long accountId) {
         if(!accountRepository.existsById(accountId)) {
             throw new AccountNotFoundException("Account with id: " + accountId + "not found");
         }

@@ -10,7 +10,7 @@ import java.util.List;
 public interface AccountService {
     AccountResponse createAccount(AccountRequest request);
     Account getAccountbyID(Long accountId);
-    int getAccountBalance(Long accountId);
+    BigDecimal getAccountBalance(Long accountId);
     List<Account> getAllAccountsforUser(Long userID);
     BigDecimal getNetWorth(Long UserID);
     boolean deleteAccount(Long accountId);

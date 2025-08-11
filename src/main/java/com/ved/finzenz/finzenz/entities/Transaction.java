@@ -33,8 +33,6 @@ public class Transaction implements Serializable {
         CREDIT,
         DEBIT,
         TRANSFER,
-        INCOME,
-        EXPENSE,
     }
 
     @Id

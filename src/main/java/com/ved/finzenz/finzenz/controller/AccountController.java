@@ -42,7 +42,7 @@ public class AccountController {
 
     @GetMapping("/balance/{accountId}")
     public ResponseEntity<?> getBalance(@PathVariable Long accountId) {
-        int balance = accountService.getAccountBalance(accountId);
+        BigDecimal balance = accountService.getAccountBalance(accountId);
         return ResponseEntity.ok(balance);
     }
 
