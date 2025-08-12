@@ -17,6 +17,14 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     boolean deleteAccountByAccountId(Long accountId);
 
+
+    @Query(value = "SELECT SUM(balance) FROM accounts WHERE user_id = :userId GROUP BY user_id", nativeQuery = true)
+    BigDecimal getTotalBalanceByUserId(@Param("userId") Long userId);
+
+
+}
+
+
     @Query(value = "SELECT SUM(balance) FROM accounts WHERE user_id = :userId GROUP BY user_id", nativeQuery = true)
     BigDecimal getTotalBalanceByUserId(@Param("userId") Long userId);
 
