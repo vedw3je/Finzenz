@@ -40,4 +40,3 @@ public class AccountResponse {
         this.userEmail = userEmail;
     }
 }
-

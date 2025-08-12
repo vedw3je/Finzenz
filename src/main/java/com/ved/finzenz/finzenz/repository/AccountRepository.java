@@ -11,11 +11,12 @@ import java.util.List;
 public interface AccountRepository extends JpaRepository<Account, Long> {
     List<Account> findByUserId(Long userId);
     Account findByAccountId(Long accountId);
-    
+
     @Query("SELECT a.balance FROM Account a WHERE a.accountId = :accountId")
     BigDecimal findBalanceByAccountId(@Param("accountId") Long accountId);
 
     boolean deleteAccountByAccountId(Long accountId);
+
 
     @Query(value = "SELECT SUM(balance) FROM accounts WHERE user_id = :userId GROUP BY user_id", nativeQuery = true)
     BigDecimal getTotalBalanceByUserId(@Param("userId") Long userId);
@@ -23,3 +24,9 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
 }
 
+
+    @Query(value = "SELECT SUM(balance) FROM accounts WHERE user_id = :userId GROUP BY user_id", nativeQuery = true)
+    BigDecimal getTotalBalanceByUserId(@Param("userId") Long userId);
+
+
+}

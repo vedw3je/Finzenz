@@ -68,4 +68,3 @@ public class Account {
         if (isActive == null) isActive = true; // Default to active if not set.
     }
 }
-

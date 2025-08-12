@@ -22,5 +22,4 @@ public interface BudgetRepository extends JpaRepository<Budget, Integer> {
       AND b.endDate >= :date
 """)
     List<Budget> findActiveBudgets(Integer userId, String category, LocalDate date);
-
 }

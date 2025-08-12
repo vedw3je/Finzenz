@@ -47,4 +47,5 @@ public class Budget implements Serializable {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDate createdAt;
+
 }
