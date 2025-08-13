@@ -20,7 +20,6 @@ public class Account {
         SAVINGS,
         INVESTMENTS,
         CURRENT,
-        RECURRING,
         FIXED_DEPOSIT,
         NRI
     }

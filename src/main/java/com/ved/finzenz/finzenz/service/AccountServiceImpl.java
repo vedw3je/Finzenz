@@ -43,6 +43,18 @@ public class AccountServiceImpl implements AccountService {
         return toResponse(saved);
     }
 
+    @Override
+    public AccountResponse updateAccount(AccountRequest request, Long accountId) {
+        Account account = accountRepository.findByAccountId(accountId);
+        if(!account.getIsActive()) throw new RuntimeException("Account is closed, can't update");
+        account.setBalance(request.getBalance());
+        account.setCurrency(request.getCurrency());
+        account.setInstitutionName(request.getInstitutionName());
+        accountRepository.save(account);
+
+        return toResponse(account);
+    }
+
     private AccountResponse toResponse(Account account) {
         AccountResponse response = new AccountResponse();
         response.setId(account.getAccountId());

@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface AccountService {
     AccountResponse createAccount(AccountRequest request);
+    AccountResponse updateAccount(AccountRequest request, Long accountId);
     Account getAccountbyID(Long accountId);
     BigDecimal getAccountBalance(Long accountId);
     List<Account> getAllAccountsforUser(Long userID);

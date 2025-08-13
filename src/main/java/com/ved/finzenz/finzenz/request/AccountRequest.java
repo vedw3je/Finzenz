@@ -1,6 +1,7 @@
 package com.ved.finzenz.finzenz.request;
 
 import com.ved.finzenz.finzenz.entities.Account;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 @Data
 @Getter
 @Setter
+@AllArgsConstructor
 public class AccountRequest {
     private String accountName;
     private Account.AccountType accountType;

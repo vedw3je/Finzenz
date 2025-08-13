@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class TransactionRequest {
 
     @NotNull(message = "Account ID cannot be null")
-    private Integer accountId;
+    private Long accountId;
 
     @NotNull(message = "Amount cannot be null")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")

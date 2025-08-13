@@ -32,7 +32,7 @@ public class Transaction implements Serializable {
     public enum TransactionType {
         CREDIT,
         DEBIT,
-        TRANSFER
+        RECURRING
     }
 
     @Id
@@ -41,7 +41,7 @@ public class Transaction implements Serializable {
 
     @NotNull(message = "Account ID cannot be null")
     @Column(name = "account_id", nullable = false)
-    private Integer accountId;
+    private Long accountId;
 
     @NotNull(message = "Amount cannot be null")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
