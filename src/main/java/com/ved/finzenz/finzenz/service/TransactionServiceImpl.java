@@ -1,6 +1,10 @@
 package com.ved.finzenz.finzenz.service;
+import com.ved.finzenz.finzenz.dto.AccountResponse;
+import com.ved.finzenz.finzenz.entities.Account;
 import com.ved.finzenz.finzenz.entities.Transaction;
+import com.ved.finzenz.finzenz.repository.AccountRepository;
 import com.ved.finzenz.finzenz.repository.TransactionRepository;
+import com.ved.finzenz.finzenz.request.AccountRequest;
 import com.ved.finzenz.finzenz.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,11 +18,29 @@ import java.util.List;
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final AccountServiceImpl accountService;
 
     // ------------------- CRUD -------------------
 
     @Override
     public Transaction createTransaction(Transaction transaction) {
+        Account account = accountService.getAccountbyID(transaction.getAccountId());
+        account.setBalance(account.getBalance().subtract(transaction.getAmount()));
+
+        AccountRequest request = new AccountRequest(account.getAccountName(),
+                account.getAccountType(),
+                account.getInstitutionName(),
+                account.getAccountNumber(),
+                account.getBalance(),
+                account.getCurrency(),
+                account.getIsActive(),
+                account.getUser().getId());
+
+        System.out.println(transaction.getAmount());
+        System.out.println(account.getBalance());
+
+        accountService.updateAccount(request, account.getAccountId());
+
         return transactionRepository.save(transaction);
     }
 

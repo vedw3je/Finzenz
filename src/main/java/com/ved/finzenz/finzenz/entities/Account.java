@@ -15,13 +15,33 @@ import java.time.LocalDateTime;
 @Builder
 public class Account {
 
+    public enum AccountType {
+        CREDIT,
+        SAVINGS,
+        INVESTMENTS,
+        CURRENT,
+        FIXED_DEPOSIT,
+        NRI
+    }
+
+    public enum CurrencyType {
+        INR,
+        USD,
+        EUR,
+        AED,
+        JPY,
+        CAD
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Primary key for the account.
+    @Column(name = "id")
+    private Long accountId;
 
     private String accountName; // User-defined name for this account (e.g., "My Savings", "HDFC Bank").
 
-    private String accountType; // Type of account (e.g., savings, checking, credit).
+    @Enumerated(EnumType.STRING)
+    private AccountType accountType; // Type of account (e.g., savings, checking, credit).
 
     private String institutionName; // Bank or financial institution name.
 
@@ -30,9 +50,10 @@ public class Account {
 
     private BigDecimal balance; // Current balance in the account.
 
-    private String currency; // Currency type (e.g., INR, USD).
+    @Enumerated(EnumType.STRING)
+    private CurrencyType currency; // Currency type (e.g., INR, USD).
 
-    private Boolean isActive; // Used to soft-disable an account (instead of deleting).
+    private Boolean isActive;
 
     private LocalDateTime createdAt; // Timestamp when account was created.
 
@@ -46,4 +67,3 @@ public class Account {
         if (isActive == null) isActive = true; // Default to active if not set.
     }
 }
-
