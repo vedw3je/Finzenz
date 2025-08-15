@@ -138,6 +138,8 @@ public class TransactionController {
         return ResponseEntity.ok(responses);
     }
 
+
+
     // ------------------LOAN ENDPOINTS------------------
     @PostMapping("/loan")
     public ResponseEntity<?> createLoanRecord(@Valid @RequestBody LoanRequest loanRequest) {
@@ -227,6 +229,9 @@ public class TransactionController {
                     .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
         }
     }
+
+    /// will be handled internally
+    ///
 
     @PostMapping("/emi/{loanId}/pay")
     public ResponseEntity<?> recordEmiPayment(@PathVariable Long loanId) {
