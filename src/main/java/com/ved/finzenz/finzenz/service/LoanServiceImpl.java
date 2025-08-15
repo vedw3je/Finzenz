@@ -153,11 +153,25 @@ public class LoanServiceImpl implements LoanService{
     }
 
     @Override
-    public List<UpcomingEmiDto> getUpcomingEmis(Long accountId) {
+    public List<LoanSummaryDto> getLoanSummaryByUser(Long userId) {
+        return loanRepository.findByUserId(userId).stream()
+                .map(loan -> LoanSummaryDto.builder()
+                        .loanId(loan.getId())
+                        .lender(loan.getLenderName())
+                        .emiAmount(loan.getEmiAmount())
+                        .nextDueDate(loan.getNextDueDate())
+                        .status(loan.getStatus())
+                        .outstandingAmount(calculateOutstanding(loan))
+                        .build()
+                ).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UpcomingEmiDto> getUpcomingEmis(Long userid) {
         LocalDate today = LocalDate.now();
         LocalDate upcomingLimit = today.plusDays(7);
 
-        return loanRepository.findByAccountId(accountId).stream()
+        return loanRepository.findByUserId(userid).stream()
                 .filter(loan -> loan.getStatus() == Loan.LoanStatus.ACTIVE)
                 .filter(loan -> loan.getNextDueDate() != null &&
                         !loan.getNextDueDate().isBefore(today) &&
@@ -249,14 +263,14 @@ public class LoanServiceImpl implements LoanService{
     }
 
     // Additional utility methods for loan management
-    public List<Loan> getOverdueLoans(Long accountId) {
-        return loanRepository.findByAccountId(accountId).stream()
+    public List<Loan> getOverdueLoans(Long userId) {
+        return loanRepository.findByUserId(userId).stream()
                 .filter(Loan::isOverdue)
                 .collect(Collectors.toList());
     }
 
-    public BigDecimal getTotalOutstanding(Long accountId) {
-        return loanRepository.findByAccountId(accountId).stream()
+    public BigDecimal getTotalOutstanding(Long userId) {
+        return loanRepository.findByUserId(userId).stream()
                 .filter(loan -> loan.getStatus() == Loan.LoanStatus.ACTIVE)
                 .map(this::calculateOutstanding)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

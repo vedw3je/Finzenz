@@ -16,6 +16,8 @@ public interface LoanService {
      */
     List<LoanSummaryDto> getLoanSummary(Long userId);
 
+    List<LoanSummaryDto> getLoanSummaryByUser(Long userId);
+
     /**
      * Get upcoming EMIs for a user
      */
