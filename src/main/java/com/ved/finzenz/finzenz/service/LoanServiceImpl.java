@@ -155,7 +155,7 @@ public class LoanServiceImpl implements LoanService{
     @Override
     public List<UpcomingEmiDto> getUpcomingEmis(Long accountId) {
         LocalDate today = LocalDate.now();
-        LocalDate upcomingLimit = today.plusDays(7);
+        LocalDate upcomingLimit = today.plusDays(31);
 
         return loanRepository.findByAccountId(accountId).stream()
                 .filter(loan -> loan.getStatus() == Loan.LoanStatus.ACTIVE)
