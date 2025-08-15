@@ -208,20 +208,20 @@ public class TransactionController {
         }
     }
 
-    @GetMapping("/user/{userId}/summary")
-    public ResponseEntity<?> getLoanSummary(@PathVariable Long userId) {
+    @GetMapping("/loan/account/{accountId}/summary")
+    public ResponseEntity<?> getLoanSummary(@PathVariable Long accountId) {
         try {
-            return ResponseEntity.ok(loanService.getLoanSummary(userId));
+            return ResponseEntity.ok(loanService.getLoanSummary(accountId));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
         }
     }
 
-    @GetMapping("/user/{userId}/upcoming")
-    public ResponseEntity<?> getUpcomingEmis(@PathVariable Long userId) {
+    @GetMapping("/loan/account/{accountId}/upcoming")
+    public ResponseEntity<?> getUpcomingEmis(@PathVariable Long accountId) {
         try {
-            return ResponseEntity.ok(loanService.getUpcomingEmis(userId));
+            return ResponseEntity.ok(loanService.getUpcomingEmis(accountId));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
@@ -245,20 +245,20 @@ public class TransactionController {
         }
     }
 
-    @GetMapping("/user/{userId}/overdue")
-    public ResponseEntity<?> getOverdueLoans(@PathVariable Long userId) {
+    @GetMapping("/loan/account/{accountId}/overdue")
+    public ResponseEntity<?> getOverdueLoans(@PathVariable Long accountId) {
         try {
-            return ResponseEntity.ok(loanService.getOverdueLoans(userId));
+            return ResponseEntity.ok(loanService.getOverdueLoans(accountId));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
         }
     }
 
-    @GetMapping("/user/{userId}/total-outstanding")
-    public ResponseEntity<?> getTotalOutstanding(@PathVariable Long userId) {
+    @GetMapping("/loan/account/{accountId}/total-outstanding")
+    public ResponseEntity<?> getTotalOutstanding(@PathVariable Long accountId) {
         try {
-            BigDecimal totalOutstanding = loanService.getTotalOutstanding(userId);
+            BigDecimal totalOutstanding = loanService.getTotalOutstanding(accountId);
             return ResponseEntity.ok(Map.of("totalOutstanding", totalOutstanding));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
