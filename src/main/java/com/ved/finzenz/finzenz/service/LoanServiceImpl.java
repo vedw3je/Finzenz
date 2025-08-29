@@ -153,17 +153,9 @@ public class LoanServiceImpl implements LoanService{
     }
 
     @Override
-    public List<LoanSummaryDto> getLoanSummaryByUser(Long userId) {
-        return loanRepository.findByUserId(userId).stream()
-                .map(loan -> LoanSummaryDto.builder()
-                        .loanId(loan.getId())
-                        .lender(loan.getLenderName())
-                        .emiAmount(loan.getEmiAmount())
-                        .nextDueDate(loan.getNextDueDate())
-                        .status(loan.getStatus())
-                        .outstandingAmount(calculateOutstanding(loan))
-                        .build()
-                ).collect(Collectors.toList());
+    public List<Loan> getLoanSummaryByUser(Long userId) {
+        return loanRepository.findByUserId(userId).stream().toList();
+
     }
 
     @Override

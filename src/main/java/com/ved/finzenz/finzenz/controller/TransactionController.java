@@ -138,6 +138,24 @@ public class TransactionController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/user/{userId}/monthly")
+    public ResponseEntity<List<TransactionResponse>> getUserMonthlyTransactions (
+            @PathVariable Integer userId,
+            @RequestParam("month") int month,
+            @RequestParam("year") int year
+    ){
+        List<TransactionResponse> monthlyTransactions = transactionService
+                .getUserMonthlyTransactions(userId,month,year)
+                .stream()
+                .map(TransactionResponse::new)
+                .toList();
+
+        return ResponseEntity.ok(monthlyTransactions);
+
+    }
+
+
+
 
 
 

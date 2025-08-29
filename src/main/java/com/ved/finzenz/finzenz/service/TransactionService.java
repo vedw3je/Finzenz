@@ -21,7 +21,7 @@ public interface TransactionService {
 
     // Get all transactions for all accounts of a user (native query)
     List<Transaction> getTransactionsByUserId(Integer userId);
-
+    List<Transaction> getUserMonthlyTransactions(Integer userId, int month, int year);
 
 
     // Get all transactions for a user in a date range

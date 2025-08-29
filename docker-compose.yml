@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    container_name: finzenz_db
+    environment:
+      POSTGRES_USER: ved
+      POSTGRES_PASSWORD: ved123
+      POSTGRES_DB: finzenz
+
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: finzenz_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/finzenz
+      SPRING_DATASOURCE_USERNAME: ved
+      SPRING_DATASOURCE_PASSWORD: ved123
+
+volumes:
+  postgres_data:

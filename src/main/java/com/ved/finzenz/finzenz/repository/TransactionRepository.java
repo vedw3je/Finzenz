@@ -45,4 +45,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             Integer accountId,
             String keyword
     );
+
+    @Query(value = "SELECT t.* FROM transactions t " +
+            "JOIN accounts a ON t.account_id = a.id " +
+            "WHERE a.user_id = :userId " +
+            "AND EXTRACT(MONTH FROM t.transaction_date) = :month " +
+            "AND EXTRACT(YEAR FROM t.transaction_date) = :year",
+            nativeQuery = true)
+    List<Transaction> findUserMonthlyTransactions(
+            @Param("userId") Integer userId,
+            @Param("month") int month,
+            @Param("year") int year);
+
 }

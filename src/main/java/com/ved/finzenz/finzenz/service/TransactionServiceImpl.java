@@ -84,6 +84,11 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.findByUserId(userId); // native query
     }
 
+    @Override
+    public List<Transaction> getUserMonthlyTransactions(Integer userId, int month, int year) {
+        return transactionRepository.findUserMonthlyTransactions(userId, month, year);
+    }
+
 
 
     @Override
