@@ -1,10 +1,10 @@
 package com.ved.finzenz.finzenz.scheduler;
 
-import com.ved.finzenz.finzenz.entities.Loan;
-import com.ved.finzenz.finzenz.entities.Loan.LoanStatus;
-import com.ved.finzenz.finzenz.entities.Transaction;
-import com.ved.finzenz.finzenz.repository.LoanRepository;
-import com.ved.finzenz.finzenz.repository.TransactionRepository;
+import com.ved.finzenz.finzenz.LoanService.entity.Loan;
+import com.ved.finzenz.finzenz.LoanService.entity.Loan.LoanStatus;
+import com.ved.finzenz.finzenz.TransactionService.entity.Transaction;
+import com.ved.finzenz.finzenz.LoanService.repository.LoanRepository;
+import com.ved.finzenz.finzenz.TransactionService.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
