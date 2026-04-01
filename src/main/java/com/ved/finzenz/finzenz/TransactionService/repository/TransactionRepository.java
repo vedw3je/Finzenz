@@ -2,59 +2,83 @@ package com.ved.finzenz.finzenz.TransactionService.repository;
 
 
 import com.ved.finzenz.finzenz.TransactionService.entity.Transaction;
+import com.ved.finzenz.finzenz.TransactionService.enums.TransactionType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
 
-    // Native query: find all transactions by userId
-    @Query(
-            value = "SELECT t.* FROM transactions t " +
-                    "JOIN accounts a ON t.account_id = a.id " +
-                    "WHERE a.user_id = :userId",
-            nativeQuery = true
-    )
-    List<Transaction> findByUserId(@Param("userId") Integer userId);
+    List<Transaction> findByAccountUserId(Integer userId);
 
-    // Find all transactions for an account
-    List<Transaction> findByAccountId(Integer accountId);
+    List<Transaction> findByAccountId(Long accountId);
 
-    // Find all transactions for an account within a date range
-    List<Transaction> findByAccountIdAndTransactionDateBetween(
-            Integer accountId,
+    List<Transaction> findByAccountUserIdAndTransactionDateBetween(
+            Integer userId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount),0)
+        FROM Transaction t
+        WHERE t.account.user.id = :userId
+        AND LOWER(t.category) = LOWER(:category)
+        AND t.transactionType = 'DEBIT'
+    """)
+    BigDecimal getTotalSpendingByCategory(Integer userId, String category);
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount),0)
+        FROM Transaction t
+        WHERE t.account.user.id = :userId
+        AND t.transactionType = 'CREDIT'
+    """)
+    BigDecimal getTotalIncome(Integer userId);
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount),0)
+        FROM Transaction t
+        WHERE t.account.user.id = :userId
+        AND t.transactionType = 'DEBIT'
+    """)
+    BigDecimal getTotalExpense(Integer userId);
+
+    @Query("""
+    SELECT t FROM Transaction t
+    WHERE t.account.user.id = :userId
+    AND MONTH(t.transactionDate) = :month
+    AND YEAR(t.transactionDate) = :year
+    """)
+    List<Transaction> findUserMonthlyTransactions(Integer userId, int month, int year);
+
+    @Query("""
+    SELECT t FROM Transaction t
+    WHERE t.account.user.id = :userId
+    AND LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    """)
+    List<Transaction> searchByDescription(Integer userId, String keyword);
+
+    @Query("""
+    SELECT t FROM Transaction t
+    WHERE t.account.user.id = :userId
+    AND t.transactionDate BETWEEN :startDate AND :endDate
+    """)
+    List<Transaction> findByUserIdAndDateRange(
+            Integer userId,
             LocalDateTime startDate,
             LocalDateTime endDate
     );
 
 
-
-    // Find all transactions for an account and type
-    List<Transaction> findByAccountIdAndTransactionType(
-            Integer accountId,
-            Transaction.TransactionType transactionType
-    );
-
-    // Search by description keyword
-    List<Transaction> findByAccountIdAndDescriptionContainingIgnoreCase(
-            Integer accountId,
-            String keyword
-    );
-
-    @Query(value = "SELECT t.* FROM transactions t " +
-            "JOIN accounts a ON t.account_id = a.id " +
-            "WHERE a.user_id = :userId " +
-            "AND EXTRACT(MONTH FROM t.transaction_date) = :month " +
-            "AND EXTRACT(YEAR FROM t.transaction_date) = :year",
-            nativeQuery = true)
-    List<Transaction> findUserMonthlyTransactions(
-            @Param("userId") Integer userId,
-            @Param("month") int month,
-            @Param("year") int year);
-
+    Page<Transaction> findByAccountUserId(Integer userId, Pageable pageable);
 }
+
+

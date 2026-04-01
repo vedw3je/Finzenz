@@ -1,11 +1,20 @@
 package com.ved.finzenz.finzenz.BudgetService.service;
 
+import com.ved.finzenz.finzenz.BudgetService.dto.BudgetResponse;
 import com.ved.finzenz.finzenz.BudgetService.entity.Budget;
+import com.ved.finzenz.finzenz.BudgetService.mapper.BudgetMapper;
 import com.ved.finzenz.finzenz.BudgetService.repository.BudgetRepository;
+import com.ved.finzenz.finzenz.BudgetService.request.BudgetRequest;
 import com.ved.finzenz.finzenz.TransactionService.repository.TransactionRepository;
+import com.ved.finzenz.finzenz.TransactionService.service.TransactionService;
 import com.ved.finzenz.finzenz.TransactionService.service.TransactionServiceImpl;
+import com.ved.finzenz.finzenz.UserService.entity.User;
+import com.ved.finzenz.finzenz.UserService.repository.UserRepository;
+import com.ved.finzenz.finzenz.exceptions.BudgetNotFoundException;
+import com.ved.finzenz.finzenz.exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,67 +22,79 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BudgetServiceImpl implements BudgetService {
 
     private final BudgetRepository budgetRepository;
-    private final TransactionRepository transactionRepository;
-    private final TransactionServiceImpl transactionService;
+    private final UserRepository userRepository;
+    private final TransactionService transactionService;
+    private final BudgetMapper budgetMapper;
 
     @Override
-    public Budget createBudget(Budget budget) {
-        return budgetRepository.save(budget);
+    public BudgetResponse createBudget(BudgetRequest request) {
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        Budget budget = budgetMapper.toEntity(request, user);
+
+        return budgetMapper.toResponse(budgetRepository.save(budget));
     }
 
     @Override
-    public List<Budget> getBudgetsByUserId(Integer userId) {
-        return budgetRepository.findByUserId(userId);
+    @Transactional(readOnly = true)
+    public List<BudgetResponse> getBudgetsByUserId(Integer userId) {
+        return budgetRepository.findByUserId(userId)
+                .stream()
+                .map(budgetMapper::toResponse)
+                .toList();
     }
 
     @Override
-    public List<Budget> getBudgetsByCategory(Integer userId, String category) {
-        return budgetRepository.findByUserIdAndCategoryIgnoreCase(userId, category);
+    @Transactional(readOnly = true)
+    public List<BudgetResponse> getBudgetsByCategory(Integer userId, String category) {
+        return budgetRepository.findByUserIdAndCategoryIgnoreCase(userId, category)
+                .stream()
+                .map(budgetMapper::toResponse)
+                .toList();
     }
 
-
     @Override
-    public Budget updateBudget(Integer id, Budget budget) {
-        Budget existing = budgetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Budget not found"));
-        existing.setCategory(budget.getCategory());
-        existing.setAmount(budget.getAmount());
-        existing.setStartDate(budget.getStartDate());
-        existing.setEndDate(budget.getEndDate());
-        return budgetRepository.save(existing);
+    public BudgetResponse updateBudget(Integer id, BudgetRequest request) {
+
+        Budget budget = budgetRepository.findById(id)
+                .orElseThrow(() -> new BudgetNotFoundException("Budget not found"));
+
+        budget.setCategory(request.getCategory());
+        budget.setAmount(request.getAmount());
+        budget.setStartDate(request.getStartDate());
+        budget.setEndDate(request.getEndDate());
+
+        return budgetMapper.toResponse(budget);
     }
 
     @Override
     public void deleteBudget(Integer id) {
+        if (!budgetRepository.existsById(id)) {
+            throw new BudgetNotFoundException("Budget not found");
+        }
         budgetRepository.deleteById(id);
     }
 
-//    Needs fix
     @Override
+    @Transactional(readOnly = true)
     public BigDecimal getRemainingBudget(Integer userId, String category, LocalDate date) {
-        List<Budget> budgets = budgetRepository.findByUserIdAndCategoryIgnoreCase(userId, category);
 
-        // Filter to active budgets on the given date
-        budgets = budgets.stream()
-                .filter(b -> !date.isBefore(b.getStartDate()) && !date.isAfter(b.getEndDate()))
-                .toList();
+        BigDecimal totalBudget = budgetRepository
+                .getActiveBudgetTotal(userId, category, date);
 
-        if (budgets.isEmpty()) {
-            throw new RuntimeException("No active budget found for category: " + category);
+        if (totalBudget.compareTo(BigDecimal.ZERO) == 0) {
+            throw new BudgetNotFoundException("No active budget found");
         }
 
-        // Sum all matching budgets
-        BigDecimal totalBudget = budgets.stream()
-                .map(Budget::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal spent = transactionService
+                .getTotalSpendingByCategory(userId, category);
 
-        // ✅ Use existing method from TransactionService
-        BigDecimal totalSpent = transactionService.getTotalSpendingByCategoryForUser(userId, category);
-        System.out.println("Total spent for "+category + " is " + totalSpent);
-
-        return totalBudget.subtract(totalSpent);
+        return totalBudget.subtract(spent);
     }
 }

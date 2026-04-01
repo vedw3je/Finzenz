@@ -1,5 +1,6 @@
 package com.ved.finzenz.finzenz.LoanService.entity;
 
+import com.ved.finzenz.finzenz.AccountService.entity.Account;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -30,39 +31,34 @@ public class Loan implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "Account ID cannot be null")
-    @Column(name = "account_id", nullable = false)
-    private Long accountId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
-    @NotNull(message = "Lender name cannot be null")
+
     @Column(name = "lender_name", nullable = false, length = 150)
     private String lenderName;
 
-    @NotNull(message = "Principal amount cannot be null")
-    @DecimalMin(value = "0.01", message = "Principal amount must be greater than zero")
-    @Column(name = "principal_amount", nullable = false, precision = 15, scale = 2)
-    private BigDecimal principalAmount; // Total loan amount
 
-    @NotNull(message = "Interest rate cannot be null")
-    @DecimalMin(value = "0.00", message = "Interest rate cannot be negative")
+    @Column(name = "principal_amount", nullable = false, precision = 15, scale = 2)
+    private BigDecimal principalAmount;
+
+
     @Column(name = "interest_rate", nullable = false, precision = 5, scale = 2)
-    private BigDecimal interestRate; // Annual interest rate %
+    private BigDecimal interestRate;
 
     // Made nullable since we'll calculate from term in days and recurring interval
     @Column(name = "tenure_months")
     private Integer tenureMonths; // Total number of months (calculated field)
 
-    @NotNull(message = "EMI amount cannot be null")
-    @DecimalMin(value = "0.01", message = "EMI amount must be greater than zero")
+
     @Column(name = "emi_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal emiAmount; // Recurring installment amount
 
-    @NotNull(message = "Start date cannot be null")
-    @Column(name = "start_date", nullable = false)
+
     private LocalDate startDate; // When loan starts
 
-    @NotNull(message = "End date cannot be null")
-    @Column(name = "end_date", nullable = false)
+
     private LocalDate endDate; // Loan maturity date
 
     @Column(name = "next_due_date")
@@ -73,8 +69,7 @@ public class Loan implements Serializable {
     private LoanStatus status;
 
     // All loans are recurring - removed isRecurring field and made interval mandatory
-    @NotNull(message = "Recurring interval cannot be null")
-    @Positive(message = "Recurring interval must be greater than zero")
+
     @Column(name = "recurring_interval_days", nullable = false)
     private Integer recurringIntervalDays; // e.g., 1=daily, 7=weekly, 15=bi-weekly, 30=monthly
 
@@ -82,8 +77,7 @@ public class Loan implements Serializable {
     private LocalDate lastPaymentDate;
 
     // Additional field to track total number of installments
-    @NotNull(message = "Total installments cannot be null")
-    @Positive(message = "Total installments must be greater than zero")
+
     @Column(name = "total_installments", nullable = false)
     private Integer totalInstallments; // Total number of payments
 

@@ -1,168 +1,170 @@
 package com.ved.finzenz.finzenz.LoanService.controller;
 
 
+import com.ved.finzenz.finzenz.LoanService.dto.LoanResponse;
 import com.ved.finzenz.finzenz.LoanService.dto.LoanSummaryDto;
+import com.ved.finzenz.finzenz.LoanService.dto.UpcomingEmiDto;
 import com.ved.finzenz.finzenz.LoanService.entity.Loan;
+import com.ved.finzenz.finzenz.LoanService.mapper.LoanMapper;
 import com.ved.finzenz.finzenz.LoanService.request.LoanRequest;
 import com.ved.finzenz.finzenz.LoanService.service.LoanService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Loan APIs", description = "Manage loans, EMIs, and outstanding liabilities")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/loans")
+@RequiredArgsConstructor
 public class LoanController {
 
     private final LoanService loanService;
+    private final LoanMapper loanMapper;
 
-    public LoanController(LoanService loanService) {
-        this.loanService = loanService;
-    }
-
-    // ------------------ LOAN ENDPOINTS ------------------
-
+    // ---------------- CREATE LOAN ----------------
+    @Operation(
+            summary = "Create a loan",
+            description = "Allows ADMIN to create a new loan with EMI schedule and repayment details"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Loan created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<?> createLoanRecord(@Valid @RequestBody LoanRequest loanRequest) {
-        try {
-            if (loanRequest.getStartDate() != null && loanRequest.getEndDate() != null) {
-                if (!loanRequest.isValidDateRange()) {
-                    return ResponseEntity.badRequest()
-                            .body(Map.of("error", "End date cannot be before start date"));
-                }
-            }
+    public ResponseEntity<LoanSummaryDto> createLoan(
+            @Valid @RequestBody LoanRequest request) {
 
-            Loan loan = convertToLoanEntity(loanRequest);
-            Loan createdLoan = loanService.createLoan(loan);
-
-            LoanSummaryDto response = LoanSummaryDto.builder()
-                    .loanId(createdLoan.getId())
-                    .lender(createdLoan.getLenderName())
-                    .emiAmount(createdLoan.getEmiAmount())
-                    .nextDueDate(createdLoan.getNextDueDate())
-                    .status(createdLoan.getStatus())
-                    .outstandingAmount(loanService.calculateOutstanding(createdLoan))
-                    .build();
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(loanService.createLoan(request));
     }
 
+    // ---------------- GET LOAN BY ID ----------------
+    @Operation(
+            summary = "Get loan details",
+            description = "Fetch complete loan details including outstanding amount"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','VIEWER')")
     @GetMapping("/{loanId}")
-    public ResponseEntity<?> getLoanDetails(@PathVariable Long loanId) {
-        try {
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
-                    .body(Map.of("message", "Please implement getLoanById method in service"));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<LoanResponse> getLoan(@PathVariable Long loanId) {
+
+        Loan loan = loanService.getLoanById(loanId);
+
+        return ResponseEntity.ok(
+                loanMapper.toResponse(
+                        loan,
+                        loanService.calculateOutstanding(loan)
+                )
+        );
     }
 
-    @GetMapping("/user/{userId}/summary")
-    public ResponseEntity<?> getLoanSummarybyUser(@PathVariable Long userId) {
-        try {
-            return ResponseEntity.ok(loanService.getLoanSummaryByUser(userId));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
+    // ---------------- GET LOANS BY USER ----------------
+    @Operation(
+            summary = "Get loans by user",
+            description = "Returns all loans associated with a specific user"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','VIEWER')")
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<LoanSummaryDto>> getLoansByUser(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                loanService.getLoanSummaryByUser(userId)
+        );
     }
 
-    @GetMapping("/account/{accountId}/summary")
-    public ResponseEntity<?> getLoanSummary(@PathVariable Long accountId) {
-        try {
-            return ResponseEntity.ok(loanService.getLoanSummary(accountId));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
+    // ---------------- GET LOANS BY ACCOUNT ----------------
+    @Operation(
+            summary = "Get loans by account",
+            description = "Fetch all loans linked to a specific account"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','VIEWER')")
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<LoanSummaryDto>> getLoansByAccount(
+            @PathVariable Long accountId) {
+
+        return ResponseEntity.ok(
+                loanService.getLoanSummary(accountId)
+        );
     }
 
+    // ---------------- UPCOMING EMIs ----------------
+    @Operation(
+            summary = "Get upcoming EMIs",
+            description = "Returns list of upcoming EMI payments for a user"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','VIEWER')")
     @GetMapping("/user/{userId}/upcoming")
-    public ResponseEntity<?> getUpcomingEmis(@PathVariable Long userId) {
-        try {
-            return ResponseEntity.ok(loanService.getUpcomingEmis(userId));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
+    public ResponseEntity<List<UpcomingEmiDto>> getUpcomingEmis(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                loanService.getUpcomingEmis(userId)
+        );
     }
 
-    @PostMapping("/emi/{loanId}/pay")
-    public ResponseEntity<?> recordEmiPayment(@PathVariable Long loanId) {
-        try {
-            loanService.recordEmiPayment(loanId);
-            return ResponseEntity.ok(Map.of("message", "EMI payment recorded successfully"));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
+    // ---------------- PAY EMI ----------------
+    @Operation(
+            summary = "Pay EMI",
+            description = "Allows ADMIN to record EMI payment and update loan status"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "EMI payment recorded"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Loan not found")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{loanId}/pay")
+    public ResponseEntity<Void> payEmi(@PathVariable Long loanId) {
+
+        loanService.recordEmiPayment(loanId);
+        return ResponseEntity.ok().build();
     }
 
+    // ---------------- OVERDUE LOANS ----------------
+    @Operation(
+            summary = "Get overdue loans",
+            description = "Returns loans that have missed EMI payments"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','VIEWER')")
     @GetMapping("/user/{userId}/overdue")
-    public ResponseEntity<?> getOverdueLoans(@PathVariable Long userId) {
-        try {
-            return ResponseEntity.ok(loanService.getOverdueLoans(userId));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
+    public ResponseEntity<List<LoanResponse>> getOverdueLoans(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                loanService.getOverdueLoans(userId)
+        );
     }
 
-    @GetMapping("/user/{userId}/total-outstanding")
-    public ResponseEntity<?> getTotalOutstanding(@PathVariable Long userId) {
-        try {
-            BigDecimal totalOutstanding = loanService.getTotalOutstanding(userId);
-            return ResponseEntity.ok(Map.of("totalOutstanding", totalOutstanding));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
-    }
+    // ---------------- TOTAL OUTSTANDING ----------------
+    @Operation(
+            summary = "Get total outstanding",
+            description = "Calculates total outstanding loan amount for a user"
+    )
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','VIEWER')")
+    @GetMapping("/user/{userId}/outstanding")
+    public ResponseEntity<BigDecimal> getTotalOutstanding(
+            @PathVariable Long userId) {
 
-    // ------------------ HELPER ------------------
-
-    private Loan convertToLoanEntity(LoanRequest loanRequest) {
-        LocalDate startDate = loanRequest.getStartDate() != null
-                ? loanRequest.getStartDate()
-                : LocalDate.now();
-
-        LocalDate endDate = loanRequest.getEndDate() != null
-                ? loanRequest.getEndDate()
-                : startDate.plusDays(loanRequest.getTermInDays());
-
-        int totalInstallments = (int) Math.ceil(
-                (double) loanRequest.getTermInDays() / loanRequest.getRecurringIntervalDays());
-
-        return Loan.builder()
-                .accountId(loanRequest.getAccountId())
-                .lenderName(loanRequest.getLenderName())
-                .principalAmount(loanRequest.getLoanAmount())
-                .interestRate(loanRequest.getInterestRate())
-                .startDate(startDate)
-                .endDate(endDate)
-                .recurringIntervalDays(loanRequest.getRecurringIntervalDays())
-                .totalInstallments(totalInstallments)
-                .status(Loan.LoanStatus.ACTIVE)
-                .completedInstallments(0)
-                .build();
+        return ResponseEntity.ok(
+                loanService.getTotalOutstanding(userId)
+        );
     }
 }

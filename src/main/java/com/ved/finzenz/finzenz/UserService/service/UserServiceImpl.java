@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         // Defaults
-        user.setRole(Role.VIEWER); // 🔥 important
+        user.setRole(request.getRole());
         user.setIsActive(true);
         user.setIsDeleted(false);
         user.setKycVerified(false);

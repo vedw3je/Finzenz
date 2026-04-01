@@ -1,6 +1,7 @@
 package com.ved.finzenz.finzenz.UserService.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ved.finzenz.finzenz.UserService.enums.Role;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,7 +16,7 @@ public class RegisterRequest {
     private String phone;
     private String address;
     private String gender;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    private Role role;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
-
 }

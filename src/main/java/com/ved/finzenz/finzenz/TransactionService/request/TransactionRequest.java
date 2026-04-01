@@ -1,6 +1,7 @@
 package com.ved.finzenz.finzenz.TransactionService.request;
 
 import com.ved.finzenz.finzenz.TransactionService.entity.Transaction;
+import com.ved.finzenz.finzenz.TransactionService.enums.TransactionType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -28,7 +29,7 @@ public class TransactionRequest {
     private String description;
 
     @NotNull(message = "Transaction type cannot be null")
-    private Transaction.TransactionType transactionType;
+    private TransactionType transactionType;
 
     private String category;
 }

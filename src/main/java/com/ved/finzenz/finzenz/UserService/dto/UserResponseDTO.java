@@ -6,6 +6,13 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
+
+import com.ved.finzenz.finzenz.UserService.entity.User;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDate;
+
 @Getter
 @Setter
 public class UserResponseDTO {
@@ -20,6 +27,12 @@ public class UserResponseDTO {
     private boolean isActive;
     private boolean kycVerified;
 
+    // 🔥 NEW FIELDS
+    private String role;
+    private String accessToken;
+    private String refreshToken;
+
+    // Existing constructor
     public UserResponseDTO(User user) {
         this.id = user.getId();
         this.fullName = user.getFullName();
@@ -30,6 +43,14 @@ public class UserResponseDTO {
         this.dateOfBirth = user.getDateOfBirth();
         this.isActive = user.getIsActive();
         this.kycVerified = user.getKycVerified();
+        this.role = user.getRole().name();
+    }
+
+    // 🔥 NEW STATIC FACTORY (BEST PRACTICE)
+    public static UserResponseDTO withTokens(User user, String accessToken, String refreshToken) {
+        UserResponseDTO dto = new UserResponseDTO(user);
+        dto.setAccessToken(accessToken);
+        dto.setRefreshToken(refreshToken);
+        return dto;
     }
 }
-

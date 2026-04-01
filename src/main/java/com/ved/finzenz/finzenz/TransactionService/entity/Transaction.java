@@ -1,5 +1,7 @@
 package com.ved.finzenz.finzenz.TransactionService.entity;
 
+import com.ved.finzenz.finzenz.AccountService.entity.Account;
+import com.ved.finzenz.finzenz.TransactionService.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,59 +19,37 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
 
+@Entity
+@Table(name = "transactions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "transactions")
-public class Transaction implements Serializable {
-
-    public enum TransactionType {
-        CREDIT,
-        DEBIT,
-        RECURRING
-    }
+public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotNull(message = "Account ID cannot be null")
-    @Column(name = "account_id", nullable = false)
-    private Long accountId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
-    @NotNull(message = "Amount cannot be null")
-    @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @NotNull(message = "Transaction date cannot be null")
-    @Column(name = "transaction_date", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime transactionDate;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @NotNull(message = "Transaction type cannot be null")
     @Enumerated(EnumType.STRING)
-    @Column(name = "transaction_type", nullable = false, length = 20)
+    @Column(nullable = false)
     private TransactionType transactionType;
 
-    @Column(length = 100)
     private String category;
-
-    @PrePersist
-    public void prePersist() {
-        if (transactionDate == null) {
-            transactionDate = LocalDateTime.now();
-        }
-    }
 }
-
-

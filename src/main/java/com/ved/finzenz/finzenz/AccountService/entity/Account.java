@@ -5,6 +5,7 @@ import com.ved.finzenz.finzenz.AccountService.enums.CurrencyType;
 import com.ved.finzenz.finzenz.UserService.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,38 +19,36 @@ import java.time.LocalDateTime;
 @Builder
 public class Account {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long accountId;
+    private Long id;
 
-    private String accountName; // User-defined name for this account (e.g., "My Savings", "HDFC Bank").
-
-    @Enumerated(EnumType.STRING)
-    private AccountType accountType; // Type of account (e.g., savings, checking, credit).
-
-    private String institutionName; // Bank or financial institution name.
-
-    @Column(unique = true)
-    private String accountNumber; // Unique account number to prevent duplicates.
-
-    private BigDecimal balance; // Current balance in the account.
+    @Column(nullable = false)
+    private String accountName;
 
     @Enumerated(EnumType.STRING)
-    private CurrencyType currency; // Currency type (e.g., INR, USD).
+    @Column(nullable = false)
+    private AccountType accountType;
 
-    private Boolean isActive;
+    private String institutionName;
 
-    private LocalDateTime createdAt; // Timestamp when account was created.
+    @Column(nullable = false, unique = true)
+    private String accountNumber;
+
+    @Column(nullable = false)
+    private BigDecimal balance;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CurrencyType currency;
+
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // Owner of the account — many accounts can belong to one user.
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now(); // Auto-set creation time.
-        if (isActive == null) isActive = true; // Default to active if not set.
-    }
+    private User user;
 }

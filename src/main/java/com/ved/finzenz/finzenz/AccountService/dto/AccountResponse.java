@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class AccountResponse {
     private Long id;
     private String accountName;

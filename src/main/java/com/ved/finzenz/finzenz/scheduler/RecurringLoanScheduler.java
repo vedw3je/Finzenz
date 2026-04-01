@@ -4,6 +4,7 @@ import com.ved.finzenz.finzenz.LoanService.entity.Loan;
 import com.ved.finzenz.finzenz.LoanService.entity.Loan.LoanStatus;
 import com.ved.finzenz.finzenz.TransactionService.entity.Transaction;
 import com.ved.finzenz.finzenz.LoanService.repository.LoanRepository;
+import com.ved.finzenz.finzenz.TransactionService.enums.TransactionType;
 import com.ved.finzenz.finzenz.TransactionService.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,9 +53,9 @@ public class RecurringLoanScheduler {
 
         // Create a transaction
         Transaction transaction = Transaction.builder()
-                .accountId(loan.getAccountId())
+                .account(loan.getAccount())
                 .amount(emiAmount)
-                .transactionType(Transaction.TransactionType.DEBIT) // Assuming debit from borrower
+                .transactionType(TransactionType.DEBIT) // Assuming debit from borrower
                 .description("Recurring EMI payment for Loan ID " + loan.getId())
                 .transactionDate(LocalDate.now().atStartOfDay())
                 .build();

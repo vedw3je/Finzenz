@@ -10,10 +10,10 @@ import java.util.List;
 public interface AccountService {
     AccountResponse createAccount(AccountRequest request);
     AccountResponse updateAccount(AccountRequest request, Long accountId);
-    Account getAccountbyID(Long accountId);
+    AccountResponse getAccountById(Long accountId);
     BigDecimal getAccountBalance(Long accountId);
-    List<Account> getAllAccountsforUser(Long userID);
+    List<AccountResponse> getAccountsByUser(Long userId);
     BigDecimal getNetWorth(Long UserID);
-    boolean deleteAccount(Long accountId);
+    void deleteAccount(Long accountId);
 
 }

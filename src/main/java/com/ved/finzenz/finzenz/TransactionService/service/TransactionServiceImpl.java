@@ -1,11 +1,21 @@
 package com.ved.finzenz.finzenz.TransactionService.service;
 import com.ved.finzenz.finzenz.AccountService.entity.Account;
+import com.ved.finzenz.finzenz.AccountService.repository.AccountRepository;
 import com.ved.finzenz.finzenz.AccountService.service.AccountServiceImpl;
+import com.ved.finzenz.finzenz.TransactionService.dto.TransactionResponse;
 import com.ved.finzenz.finzenz.TransactionService.entity.Transaction;
+import com.ved.finzenz.finzenz.TransactionService.enums.TransactionType;
+import com.ved.finzenz.finzenz.TransactionService.mapper.TransactionMapper;
 import com.ved.finzenz.finzenz.TransactionService.repository.TransactionRepository;
 import com.ved.finzenz.finzenz.AccountService.request.AccountRequest;
+import com.ved.finzenz.finzenz.TransactionService.request.TransactionRequest;
+import com.ved.finzenz.finzenz.exceptions.AccountNotFoundException;
+import com.ved.finzenz.finzenz.exceptions.TransactionNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,126 +23,154 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
-    private final AccountServiceImpl accountService;
-
-    // ------------------- CRUD -------------------
+    private final AccountRepository accountRepository;
+    private final TransactionMapper mapper;
 
     @Override
-    public Transaction createTransaction(Transaction transaction) {
-        Account account = accountService.getAccountbyID(transaction.getAccountId());
-        account.setBalance(account.getBalance().subtract(transaction.getAmount()));
+    public TransactionResponse createTransaction(TransactionRequest request) {
 
-        AccountRequest request = new AccountRequest(account.getAccountName(),
-                account.getAccountType(),
-                account.getInstitutionName(),
-                account.getAccountNumber(),
-                account.getBalance(),
-                account.getCurrency(),
-                account.getIsActive(),
-                account.getUser().getId());
+        Account account = accountRepository.findById(request.getAccountId())
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
 
-        System.out.println(transaction.getAmount());
-        System.out.println(account.getBalance());
+        Transaction transaction = mapper.toEntity(request, account);
 
-        accountService.updateAccount(request, account.getAccountId());
+        // 🔥 Correct balance logic
+        if (transaction.getTransactionType() == TransactionType.DEBIT) {
+            if (account.getBalance().compareTo(transaction.getAmount()) < 0) {
+                throw new IllegalStateException("Insufficient balance");
+            }
+            account.setBalance(account.getBalance().subtract(transaction.getAmount()));
+        } else {
+            account.setBalance(account.getBalance().add(transaction.getAmount()));
+        }
 
-        return transactionRepository.save(transaction);
+        // No explicit save needed → JPA dirty checking
+        transactionRepository.save(transaction);
+
+        return mapper.toResponse(transaction);
     }
 
     @Override
-    public Transaction getTransactionById(Integer id) {
+    @Transactional(readOnly = true)
+    public TransactionResponse getTransactionById(Integer id) {
         return transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
+                .map(mapper::toResponse)
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found"));
     }
 
     @Override
-    public Transaction updateTransaction(Integer id, Transaction transaction) {
-        Transaction existing = getTransactionById(id);
+    public TransactionResponse updateTransaction(Integer id, TransactionRequest request) {
 
-        existing.setAccountId(transaction.getAccountId());
-        existing.setAmount(transaction.getAmount());
-        existing.setTransactionDate(transaction.getTransactionDate());
-        existing.setDescription(transaction.getDescription());
-        existing.setTransactionType(transaction.getTransactionType());
-        existing.setCategory(transaction.getCategory());
+        Transaction existing = transactionRepository.findById(id)
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found"));
 
-        return transactionRepository.save(existing);
+        existing.setAmount(request.getAmount());
+        existing.setTransactionDate(request.getTransactionDate());
+        existing.setDescription(request.getDescription());
+        existing.setTransactionType(request.getTransactionType());
+        existing.setCategory(request.getCategory());
+
+        return mapper.toResponse(existing);
     }
+
 
     @Override
     public void deleteTransaction(Integer id) {
         if (!transactionRepository.existsById(id)) {
-            throw new RuntimeException("Transaction not found with id: " + id);
+            throw new TransactionNotFoundException("Transaction not found");
         }
         transactionRepository.deleteById(id);
     }
 
-    // ------------------- Finance App Specific -------------------
+    // ---------------- DASHBOARD READY ----------------
 
     @Override
-    public List<Transaction> getTransactionsByAccountId(Integer accountId) {
-        return transactionRepository.findByAccountId(accountId);
-    }
-
-    @Override
-    public List<Transaction> getTransactionsByUserId(Integer userId) {
-        return transactionRepository.findByUserId(userId); // native query
-    }
-
-    @Override
-    public List<Transaction> getUserMonthlyTransactions(Integer userId, int month, int year) {
-        return transactionRepository.findUserMonthlyTransactions(userId, month, year);
-    }
-
-
-
-    @Override
-    public List<Transaction> getTransactionsByUserIdAndDateRange(Integer userId, LocalDateTime startDate, LocalDateTime endDate) {
-        // Could also use a native query, but here we fetch first then filter
-        return getTransactionsByUserId(userId).stream()
-                .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getTransactionsByUser(Integer userId) {
+        return transactionRepository.findByAccountUserId(userId)
+                .stream()
+                .map(mapper::toResponse)
                 .toList();
     }
 
-
-
     @Override
-    public BigDecimal getTotalSpendingByCategoryForUser(Integer userId, String category) {
-        return getTransactionsByUserId(userId).stream()
-                .filter(t -> category.equalsIgnoreCase(t.getCategory()) && t.getTransactionType() == Transaction.TransactionType.DEBIT)
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getTransactionsByAccountId(Long accountId) {
 
-
-
-    @Override
-    public BigDecimal getTotalIncomeForUser(Integer userId) {
-        return getTransactionsByUserId(userId).stream()
-                .filter(t -> t.getTransactionType() == Transaction.TransactionType.CREDIT)
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-
-
-    @Override
-    public BigDecimal getTotalExpenseForUser(Integer userId) {
-        return getTransactionsByUserId(userId).stream()
-                .filter(t -> t.getTransactionType() == Transaction.TransactionType.DEBIT)
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-
-
-    @Override
-    public List<Transaction> searchTransactionsByDescriptionForUser(Integer userId, String keyword) {
-        return getTransactionsByUserId(userId).stream()
-                .filter(t -> t.getDescription() != null && t.getDescription().toLowerCase().contains(keyword.toLowerCase()))
+        return transactionRepository.findByAccountId(accountId)
+                .stream()
+                .map(mapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getUserMonthlyTransactions(Integer userId, int month, int year) {
+
+        return transactionRepository.findUserMonthlyTransactions(userId, month, year)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> searchTransactionsByDescriptionForUser(
+            Integer userId, String keyword) {
+
+        return transactionRepository.searchByDescription(userId, keyword)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getTransactionsByUserIdAndDateRange(
+            Integer userId,
+            LocalDateTime startDate,
+            LocalDateTime endDate) {
+
+        return transactionRepository
+                .findByUserIdAndDateRange(userId, startDate, endDate)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public BigDecimal getTotalSpendingByCategory(Integer userId, String category) {
+        return transactionRepository.getTotalSpendingByCategory(userId, category);
+    }
+
+    @Override
+    public BigDecimal getTotalIncome(Integer userId) {
+        return transactionRepository.getTotalIncome(userId);
+    }
+
+    @Override
+    public BigDecimal getTotalExpense(Integer userId) {
+        return transactionRepository.getTotalExpense(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getTransactionsPaginated(Integer userId, Pageable pageable) {
+
+        return transactionRepository
+                .findByAccountUserId(userId, pageable)
+                .map(mapper::toResponse);
+    }
+
+
+    @Override
+    public BigDecimal getNetBalance(Integer userId) {
+        BigDecimal income = transactionRepository.getTotalIncome(userId);
+        BigDecimal expense = transactionRepository.getTotalExpense(userId);
+        return income.subtract(expense);
     }
 }

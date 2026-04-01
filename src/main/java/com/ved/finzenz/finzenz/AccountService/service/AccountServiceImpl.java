@@ -2,106 +2,97 @@ package com.ved.finzenz.finzenz.AccountService.service;
 
 import com.ved.finzenz.finzenz.AccountService.dto.AccountResponse;
 import com.ved.finzenz.finzenz.AccountService.entity.Account;
+import com.ved.finzenz.finzenz.AccountService.mapper.AccountMapper;
 import com.ved.finzenz.finzenz.UserService.entity.User;
 import com.ved.finzenz.finzenz.exceptions.AccountNotFoundException;
 import com.ved.finzenz.finzenz.exceptions.UserNotFoundException;
 import com.ved.finzenz.finzenz.AccountService.repository.AccountRepository;
 import com.ved.finzenz.finzenz.UserService.repository.UserRepository;
 import com.ved.finzenz.finzenz.AccountService.request.AccountRequest;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
-
-    public AccountServiceImpl(AccountRepository accountRepository, UserRepository userRepository) {
-        this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
-    }
+    private final AccountMapper accountMapper;
 
     @Override
     public AccountResponse createAccount(AccountRequest request) {
+
+        if (accountRepository.findByAccountNumber(request.getAccountNumber()).isPresent()) {
+            throw new IllegalArgumentException("Account number already exists");
+        }
+
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new UserNotFoundException("User with ID " + request.getUserId() + " not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        Account account = new Account();
-        account.setAccountName(request.getAccountName());
-        account.setAccountType(request.getAccountType());
-        account.setInstitutionName(request.getInstitutionName());
-        account.setAccountNumber(request.getAccountNumber());
-        account.setBalance(request.getBalance());
-        account.setCurrency(request.getCurrency());
-        account.setIsActive(request.getIsActive());
-        account.setUser(user);
+        Account account = accountMapper.toEntity(request, user);
 
-        Account saved = accountRepository.save(account);
-        return toResponse(saved);
+        return accountMapper.toResponse(accountRepository.save(account));
     }
 
     @Override
     public AccountResponse updateAccount(AccountRequest request, Long accountId) {
-        Account account = accountRepository.findByAccountId(accountId);
-        if(!account.getIsActive()) throw new RuntimeException("Account is closed, can't update");
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+
+        if (!account.getIsActive()) {
+            throw new IllegalStateException("Cannot update inactive account");
+        }
+
         account.setBalance(request.getBalance());
         account.setCurrency(request.getCurrency());
         account.setInstitutionName(request.getInstitutionName());
-        accountRepository.save(account);
 
-        return toResponse(account);
+        return accountMapper.toResponse(account);
     }
-
-    private AccountResponse toResponse(Account account) {
-        AccountResponse response = new AccountResponse();
-        response.setId(account.getAccountId());
-        response.setAccountName(account.getAccountName());
-        response.setAccountType(account.getAccountType());
-        response.setInstitutionName(account.getInstitutionName());
-        response.setAccountNumber(account.getAccountNumber());
-        response.setBalance(account.getBalance());
-        response.setCurrency(account.getCurrency());
-        response.setIsActive(account.getIsActive());
-        response.setUserId(account.getUser().getId());
-        response.setUserEmail(account.getUser().getEmail());
-        return response;
-    }
-
 
     @Override
-    public Account getAccountbyID(Long accountId) {
-        if(!accountRepository.existsById(accountId)) {
-            throw new AccountNotFoundException("Account with id: " + accountId + "not found");
-        }
-        return accountRepository.findByAccountId(accountId);
+    public AccountResponse getAccountById(Long accountId) {
+        return accountRepository.findById(accountId)
+                .map(accountMapper::toResponse)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+    }
+
+    @Override
+    public List<AccountResponse> getAccountsByUser(Long userId) {
+        return accountRepository.findByUserId(userId)
+                .stream()
+                .map(accountMapper::toResponse)
+                .toList();
     }
 
     @Override
     public BigDecimal getAccountBalance(Long accountId) {
-        if(!accountRepository.existsById(accountId)) {
-            throw new AccountNotFoundException("Account with id: " + accountId + "not found");
-        }
-        return accountRepository.findBalanceByAccountId(accountId);
+        return accountRepository.findById(accountId)
+                .map(Account::getBalance)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
     }
 
     @Override
-    public List<Account> getAllAccountsforUser(Long userID) {
-        return accountRepository.findByUserId(userID);
+    public BigDecimal getNetWorth(Long userId) {
+        return Optional.ofNullable(accountRepository.getTotalBalanceByUserId(userId))
+                .orElse(BigDecimal.ZERO);
     }
 
     @Override
-    public BigDecimal getNetWorth(Long UserID) {
-        return accountRepository.getTotalBalanceByUserId(UserID);
-    }
+    public void deleteAccount(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
 
-    @Override
-    public boolean deleteAccount(Long accountId) {
-        if(!accountRepository.existsById(accountId)) {
-            throw new AccountNotFoundException("Account with id: " + accountId + "not found");
-        }
-        return accountRepository.deleteAccountByAccountId(accountId);
+        account.setIsActive(false); // ✅ soft delete
     }
 }

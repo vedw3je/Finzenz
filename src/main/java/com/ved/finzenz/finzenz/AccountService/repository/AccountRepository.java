@@ -7,18 +7,14 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
+
     List<Account> findByUserId(Long userId);
-    Account findByAccountId(Long accountId);
 
-    @Query("SELECT a.balance FROM Account a WHERE a.accountId = :accountId")
-    BigDecimal findBalanceByAccountId(@Param("accountId") Long accountId);
+    Optional<Account> findByAccountNumber(String accountNumber);
 
-    boolean deleteAccountByAccountId(Long accountId);
-
-    @Query(value = "SELECT SUM(balance) FROM accounts WHERE user_id = :userId GROUP BY user_id", nativeQuery = true)
+    @Query("SELECT SUM(a.balance) FROM Account a WHERE a.user.id = :userId")
     BigDecimal getTotalBalanceByUserId(@Param("userId") Long userId);
-
-
 }

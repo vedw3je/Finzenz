@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BudgetRequest {
-    private Integer userId;
+    private Long userId;
     private String category;
     private BigDecimal amount;
     private LocalDate startDate;

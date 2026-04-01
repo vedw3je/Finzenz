@@ -1,22 +1,24 @@
 package com.ved.finzenz.finzenz.LoanService.service;
 
+import com.ved.finzenz.finzenz.LoanService.dto.LoanResponse;
 import com.ved.finzenz.finzenz.LoanService.dto.LoanSummaryDto;
 import com.ved.finzenz.finzenz.LoanService.dto.UpcomingEmiDto;
 import com.ved.finzenz.finzenz.LoanService.entity.Loan;
+import com.ved.finzenz.finzenz.LoanService.request.LoanRequest;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public interface LoanService {
 
-    Loan createLoan(Loan loan);
+    LoanSummaryDto createLoan(LoanRequest loanRequest);
 
     /**
      * Get loan summary for a user
      */
     List<LoanSummaryDto> getLoanSummary(Long userId);
 
-    List<Loan> getLoanSummaryByUser(Long userId);
+    List<LoanSummaryDto> getLoanSummaryByUser(Long userId);
 
     /**
      * Get upcoming EMIs for a user
@@ -36,7 +38,7 @@ public interface LoanService {
     /**
      * Get overdue loans for a user
      */
-    List<Loan> getOverdueLoans(Long userId);
+    List<LoanResponse> getOverdueLoans(Long userId);
 
     /**
      * Get total outstanding amount for a user
