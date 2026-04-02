@@ -1,26 +1,37 @@
+#version: "3.9"
+#
+#services:
+#  db:
+#    image: postgres:15
+#    container_name: finzenz_db
+#    restart: always
+#    environment:
+#      POSTGRES_DB: finzenz
+#      POSTGRES_USER: ved
+#      POSTGRES_PASSWORD: ved123
+#    ports:
+#      - "5432:5432"
+#
+#  backend:
+#    build: .
+#    container_name: finzenz_backend
+#    ports:
+#      - "8080:8080"
+#    depends_on:
+#      - db
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/finzenz
+#      SPRING_DATASOURCE_USERNAME: ved
+#      SPRING_DATASOURCE_PASSWORD: ved123
+#
+
 version: "3.9"
 
 services:
-  db:
-    image: postgres:15
-    container_name: finzenz_db
-    restart: always
-    environment:
-      POSTGRES_DB: finzenz
-      POSTGRES_USER: ved
-      POSTGRES_PASSWORD: ved123
-    ports:
-      - "5432:5432"
-
   backend:
     build: .
     container_name: finzenz_backend
     ports:
       - "8080:8080"
-    depends_on:
-      - db
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/finzenz
-      SPRING_DATASOURCE_USERNAME: ved
-      SPRING_DATASOURCE_PASSWORD: ved123
-
+    env_file:
+      - .env
